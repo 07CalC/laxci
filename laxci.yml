@@ -1,10 +1,11 @@
-name: Local CI
+name: Working Directory Test
 
 jobs:
-  build:
+  test-dirs:
+    working_directory: src/  
     steps:
-      - name: Print Rust version
-        run: rustc --version
+      - name: Step with default job directory
+        run: 'pwd'
 
-      - name: Run build
-        run: cargo build
+      - name: Step with specific working directory
+        run: 'pwd && ls'

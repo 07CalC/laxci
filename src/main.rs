@@ -4,8 +4,10 @@ use workflow::*;
 use anyhow::{Context, Result};
 use clap::Parser;
 use console::{Emoji, style};
+use std::collections::HashMap;
 use std::fs;
-use std::io::{self, BufRead, BufReader};
+use std::io::{BufRead, BufReader};
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 #[derive(Parser)]
@@ -48,16 +50,66 @@ fn main() -> Result<()> {
 
         for step in job.steps {
             if let Some(name) = &step.name {
-                println!("\n{} {}", emoji_step, style(name).bold().blue());
+                println!("\n{}{}", emoji_step, style(name).bold().blue());
+            }
+
+            let mut cmd = Command::new("sh");
+            cmd.arg("-c");
+            cmd.arg(&step.run);
+            cmd.stdout(Stdio::piped());
+            cmd.stderr(Stdio::piped());
+
+            let mut merged_env = HashMap::new();
+
+            if let Some(wf_env) = &wf.env {
+                merged_env.extend(wf_env.clone());
+            }
+            if let Some(job_env) = &job.env {
+                merged_env.extend(job_env.clone());
+            }
+            if let Some(step_env) = &step.env {
+                merged_env.extend(step_env.clone());
+            }
+            for (key, value) in merged_env {
+                cmd.env(key, value);
+            }
+
+            let working_dir = if let Some(dir) = &step.working_directory {
+                Some(dir)
+            } else if let Some(dir) = &job.working_directory {
+                Some(dir)
+            } else {
+                None
+            };
+
+            if let Some(dir) = working_dir {
+                let path = Path::new(dir);
+                if !path.exists() || !path.is_dir() {
+                    println!(
+                        "{} {}",
+                        emoji_fail,
+                        style(format!(
+                            "Working directory '{}' does not exist or is not a directory",
+                            dir
+                        ))
+                        .red()
+                        .bold()
+                    );
+                    return Ok(());
+                }
+
+                println!(
+                    "{} {} {}",
+                    style("📁").dim(),
+                    style("Working directory:").dim(),
+                    style(path.display()).cyan()
+                );
+                cmd.current_dir(path);
             }
 
             println!("{} {}", style("$").dim(), style(&step.run).dim());
 
-            let mut child = Command::new("sh")
-                .arg("-c")
-                .arg(&step.run)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
+            let mut child = cmd
                 .spawn()
                 .with_context(|| format!("Failed to spawn command: {}", step.run))?;
 
@@ -74,7 +126,14 @@ fn main() -> Result<()> {
             let stderr_thread = std::thread::spawn(move || {
                 let reader = BufReader::new(stderr);
                 for line in reader.lines() {
-                    eprintln!("{}", style(line.unwrap_or_default()).red());
+                    let line = line.unwrap_or_default();
+                    if line.to_lowercase().contains("warning") {
+                        eprintln!("{}", style(line).yellow());
+                    } else if line.to_lowercase().contains("error") {
+                        eprintln!("{}", style(line).red().bold());
+                    } else {
+                        eprintln!("{}", style(line).white());
+                    }
                 }
             });
 
@@ -94,12 +153,19 @@ fn main() -> Result<()> {
                 return Ok(());
             }
             println!(
-                "{} {}",
-                emoji_success,
-                style("Step completed successfully").bold().green(),
+                "{}",
+                style(format!(
+                    "Step {} Completed",
+                    step.name.unwrap_or("unnamed step".to_string())
+                ))
+                .green(),
             );
         }
     }
-    println!("\n{} Workflow completed successfully!", emoji_success);
+    println!(
+        "\n{} {}",
+        emoji_success,
+        style("Workflow completed successfully").bold().green(),
+    );
     Ok(())
 }
