@@ -1,3 +1,4 @@
+mod sort_jobs;
 mod workflow;
 use workflow::*;
 
@@ -9,6 +10,8 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
+
+use crate::sort_jobs::sort_jobs;
 
 #[derive(Parser)]
 struct Cli {
@@ -45,10 +48,17 @@ fn main() -> Result<()> {
             .underlined()
     );
 
-    for (job_name, job) in wf.jobs {
-        println!("\n{} Job: {}", emoji_job, style(job_name).bold().cyan());
+    let job_order = sort_jobs(&wf.jobs)?;
 
-        for step in job.steps {
+    for job_name in job_order {
+        println!(
+            "\n{} Job: {}",
+            emoji_job,
+            style(job_name.clone()).bold().cyan()
+        );
+
+        let job = &wf.jobs[&job_name];
+        for step in &job.steps {
             if let Some(name) = &step.name {
                 println!("\n{}{}", emoji_step, style(name).bold().blue());
             }
@@ -163,7 +173,7 @@ fn main() -> Result<()> {
                 "{}",
                 style(format!(
                     "Step {} Completed",
-                    step.name.unwrap_or("unnamed step".to_string())
+                    step.name.clone().unwrap_or("unnamed step".to_string())
                 ))
                 .green(),
             );

@@ -92,8 +92,8 @@ Deploying from /your/project/scripts
 ## 🔧 Roadmap
 - [x] `env` support at workflow, job, and step level
 - [x] `working-directory` support
-- [ ] built-in commands like `laxci init`
-- [ ] `needs` support for job dependencies
+- [] built-in commands like `laxci init`
+- [x] `needs` support for job dependencies
 - [ ] `if:` conditionals for steps
 - [ ] timeouts for steps
 - [ ] parallel job execution

@@ -8,4 +8,11 @@ jobs:
         run: 'pwd'
 
       - name: Step with specific working directory
+        needs: [test-dirs]
+        run: 'pwd && ls'
+  dep-job:
+    working_directory: src/
+    needs: [test-dirs]
+    steps:
+      - name: Step with dependency
         run: 'pwd && ls'
