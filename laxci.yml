@@ -1,0 +1,10 @@
+name: Local CI
+
+jobs:
+  build:
+    steps:
+      - name: Print Rust version
+        run: rustc --version
+
+      - name: Run build
+        run: cargo build
