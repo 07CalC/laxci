@@ -1,18 +1,7 @@
-name: Working Directory Test
+name: Example Workflow
 
 jobs:
-  test-dirs:
-    working_directory: src/  
+  hello:
     steps:
-      - name: Step with default job directory
-        run: 'pwd'
-
-      - name: Step with specific working directory
-        needs: [test-dirs]
-        run: 'pwd && ls'
-  dep-job:
-    working_directory: src/
-    needs: [test-dirs]
-    steps:
-      - name: Step with dependency
-        run: 'pwd && ls'
+      - name: Say hello
+        run: echo "👋 Hello from LaxCI"
