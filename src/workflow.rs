@@ -13,6 +13,7 @@ pub struct Job {
     pub steps: Vec<Step>,
     pub env: Option<HashMap<String, String>>,
     pub working_directory: Option<String>,
+    pub needs: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]

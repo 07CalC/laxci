@@ -2,6 +2,14 @@
 name = "laxci"
 version = "0.1.0"
 edition = "2024"
+authors = ["CalC <hello@vinm.me>"]
+description = "A simple, CI tool for building and testing projects locally."
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/07calc/laxci"
+categories = ["development-tools"]
+keywords = ["ci", "continuous-integration", "local-ci", "build", "test"]
+exclude = ["target", "/.git", "/.github", "laxci.yml"]
 
 [dependencies]
 anyhow = "1.0.98"

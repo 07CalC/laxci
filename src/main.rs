@@ -53,8 +53,15 @@ fn main() -> Result<()> {
                 println!("\n{}{}", emoji_step, style(name).bold().blue());
             }
 
-            let mut cmd = Command::new("sh");
-            cmd.arg("-c");
+            let mut cmd = if cfg!(windows) {
+                let mut c = Command::new("cmd");
+                c.arg("/C").arg(&step.run);
+                c
+            } else {
+                let mut c = Command::new("sh");
+                c.arg("-c").arg(&step.run);
+                c
+            };
             cmd.arg(&step.run);
             cmd.stdout(Stdio::piped());
             cmd.stderr(Stdio::piped());
